@@ -21,7 +21,6 @@ RUN git reset --hard FETCH_HEAD
 
 RUN ln -s simutrans/ project/jni/application/src
 
-RUN sdkmanager --install "cmake;3.18.1"
 RUN sdkmanager --install "ndk;21.4.7075529"
 
 ENV PATH "${PATH}:${ANDROID_HOME}/ndk/21.4.7075529"
