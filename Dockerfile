@@ -30,13 +30,6 @@ ENV PATH "${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin"
 
 COPY licenses /opt/android-sdk-linux/licenses
 
-
-# Install ndk, set PATH for ndk-build
-
-RUN yes | sdkmanager --install "ndk;16.1.4479499"
-ENV PATH "${PATH}:${ANDROID_HOME}/ndk/16.1.4479499"
-
-
 # Install build-tools (platform-tools is a dependency), set PATH for adb, zipalign and apksigner, required by build.sh
 
 RUN yes | sdkmanager --install "platform-tools"
@@ -44,6 +37,12 @@ ENV PATH "${PATH}:${ANDROID_HOME}/platform-tools"
 
 RUN yes | sdkmanager --install "build-tools;30.0.3"
 ENV PATH "${PATH}:${ANDROID_HOME}/build-tools/30.0.3"
+
+
+# Install ndk, set PATH for ndk-build
+
+RUN yes | sdkmanager --install "ndk;23.0.7599858"
+ENV PATH "${PATH}:${ANDROID_HOME}/ndk/23.0.7599858"
 
 
 # Clone android sdl source from specific commit
@@ -61,3 +60,26 @@ RUN ln -s $ANDROID_HOME/licenses project/licenses
 
 RUN mkdir /root/.android/
 RUN keytool -genkey -v -keystore /root/.android/debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -keypass android -storepass android -dname "cn=example.com,ou=exampleou,dc=example,dc=com"
+
+
+# Clone simutrans
+RUN apt-get install make
+
+RUN yes | sdkmanager --install "cmake;3.18.1"
+ENV PATH "${PATH}:${ANDROID_HOME}/cmake/3.18.1/bin"
+
+RUN apt-get install -y subversion
+
+# Fix: target version 9774 for passing compile
+RUN svn checkout -r 9774 https://github.com/aburch/simutrans/trunk project/jni/application/simutrans/simutrans
+
+# Fix: symbolic link for objdump
+ENV PATH "${PATH}:${ANDROID_HOME}/ndk/23.0.7599858/toolchains/llvm/prebuilt/linux-x86_64/bin/"
+RUN ln -s llvm-objdump ${ANDROID_HOME}/ndk/23.0.7599858/toolchains/llvm/prebuilt/linux-x86_64/bin/objdump
+
+# RUN git clone https://github.com/aburch/simutrans.git project/jni/application/simutrans/simutrans
+
+# Building openttd
+# RUN apt-get install gcc g++
+# RUN git submodule update --init project/jni/application/openttd
+# RUN git submodule update --init project/jni/iconv
