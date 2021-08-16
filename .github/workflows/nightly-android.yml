@@ -10,8 +10,9 @@ on:
   workflow_dispatch:
     inputs:
       revision:
-        description: 'Target revision number (SVN); leave empty for latest'
-        default: ''
+        description: 'Target revision number (SVN), empty for latest'
+        required: true
+        default: '9274'
       paksetLink:
         description: 'Link to embedded default pakset (ex https://downloads.sourceforge.net/project/simutrans/pak64/122-0/simupak64-122-0.zip)'
         default: env.DEFAULT_PAKSETLINK
@@ -99,11 +100,17 @@ jobs:
 
     # pelya building script expects that 1/ simutrans is found inside /android-sdl/project/jni/application/simutrans/simutrans and 2/ that it is a svn repo, as revision.h is populated by svn command line
     # therefore the content below is not adapted for simutrans repository
-    - name: Setup Android SDL working folder to host Simutrans
+    - name: Setup Android SDL working folder to host Simutrans (latest)
       working-directory: /android-sdl
+      if: ${{ github.event.inputs.revision == '' }}
       run: |
-        svn checkout -r 9274 svn://servers.simutrans.org/simutrans/trunk project/jni/application/simutrans/simutrans
+        svn checkout svn://servers.simutrans.org/simutrans/trunk project/jni/application/simutrans/simutrans
     
+    - name: Setup Android SDL working folder to host Simutrans (target revision)
+      working-directory: /android-sdl
+      if: ${{ github.event.inputs.revision != '' }}
+      run: |
+        svn checkout -r ${{ github.event.inputs.revision }} svn://servers.simutrans.org/simutrans/trunk project/jni/application/simutrans/simutrans
     
     - name: Add default pakset
       working-directory: /android-sdl
