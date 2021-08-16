@@ -18,7 +18,13 @@ jobs:
         push: false
         tags: build_environment:latest
 
-    - uses: addnab/docker-run-action@v3
-      with:
-        image: build_environment:latest
-        run: ./build.sh simutrans
+    - name: build_simutrans_within_container
+      run: |
+        docker run -d --name build_container build_environment:latest sleep 3600
+        docker exec build_container ./build.sh simutrans
+        docker cp build_container:/android-sdl/project/app/build/outputs/apk/release/app-release.apk .
+        docker container stop build_container
+        docker container rm build_container
+    
+    - name: Rename result
+      run:  mv app-release.apk simuandroid-multiabi-nightly.apk
