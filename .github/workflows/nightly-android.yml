@@ -1,5 +1,9 @@
 name: Nightly build Android
 
+env:
+  DEFAULT_PAKSETLINK: 'https://downloads.sourceforge.net/project/simutrans/pak64/122-0/simupak64-122-0.zip'
+  DEFAULT_PAKSETFILE: 'simupak64-122-0.zip'
+
 on:
   push:
     
@@ -10,10 +14,10 @@ on:
         default: ''
       paksetLink:
         description: 'Link to embedded default pakset (ex https://downloads.sourceforge.net/project/simutrans/pak64/122-0/simupak64-122-0.zip)'
-        default: 'https://downloads.sourceforge.net/project/simutrans/pak64/122-0/simupak64-122-0.zip'
+        default: env.DEFAULT_PAKSETLINK
       paksetFile:
         description: 'Matching pakset file name (ex simupak64-122-0.zip)'
-        default: 'simupak64-122-0.zip'
+        default: env.DEFAULT_PAKSETFILE
 
 jobs:
   build:
@@ -104,8 +108,8 @@ jobs:
     - name: Add default pakset
       working-directory: /android-sdl
       run: |
-        wget ${{ github.event.inputs.paksetLink }}
-        unzip ./${{ github.event.inputs.paksetFile }} -d project/jni/application/simutrans/simutrans/
+        wget ${{ github.event.inputs.paksetLink || env.DEFAULT_PAKSETLINK }}
+        unzip ./${{ github.event.inputs.paksetFile || env.DEFAULT_PAKSETFILE }} -d project/jni/application/simutrans/simutrans/
 
     # some temporary changes to Android SDL are stored in <repo>/patch
     - name: (Temporary) Patch Android SDL
