@@ -26,12 +26,22 @@ jobs:
     - name: install_android_sdk_tools
       working-directory: /opt/android-sdk-linux
       run: |
+        echo "A"
         wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip
+        ls -al
+        echo "B"
         unzip commandlinetools-linux-7583922_latest.zip
+        ls -al
+        echo "C"
         mv cmdline-tools latest
+        ls -al
+        echo "D"
         mkdir cmdline-tools 
+        ls -al
+        echo "E"
         mv latest cmdline-tools/latest
         ls -al
+        echo "F"
         echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
 
     # licenses required for android should be stored sdk in repository; for now, they are stored in <root>/licenses
