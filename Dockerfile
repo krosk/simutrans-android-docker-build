@@ -66,9 +66,16 @@ RUN git init && git remote add origin https://github.com/pelya/commandergenius.g
 RUN ln -s $ANDROID_HOME/licenses project/licenses
 
 # Clone simutrans
-# Fix: target version for passing compile; last is 9774
+# Fix: explicit checkout of a target version known for passing compile with clang; last is 9774, first is 8400
 RUN svn checkout -r 9274 https://github.com/aburch/simutrans/trunk project/jni/application/simutrans/simutrans
+# download required pak and install it; the file to get depends on version
+RUN wget https://downloads.sourceforge.net/project/simutrans/pak64/122-0/simupak64-122-0.zip
+RUN unzip ./simupak64-122-0.zip -d project/jni/application/simutrans/simutrans/
 
-COPY pak .
+COPY patch .
+RUN git apply *.patch
 
-RUN unzip ./simupak64-9274.zip -d project/jni/application/simutrans/simutrans/
+# build with
+# ./build.sh simutrans
+# or
+# ./build.sh -i simutrans
