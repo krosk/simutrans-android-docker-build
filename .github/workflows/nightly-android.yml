@@ -70,7 +70,7 @@ jobs:
 
     - name: install_keystore_for_android_apk_signing
       run: |
-        sudo mkdir /root/.android/ || sudo keytool -genkey -v -keystore /root/.android/debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -keypass android -storepass android -dname "cn=example.com,ou=exampleou,dc=example,dc=com"
+        mkdir /home/runner/.android/ || keytool -genkey -v -keystore /home/runner/.android/debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -keypass android -storepass android -dname "cn=example.com,ou=exampleou,dc=example,dc=com"
 
     - name: checkout_libsdl_android
       working-directory: /android-sdl
@@ -103,3 +103,14 @@ jobs:
       working-directory: /android-sdl
       run: |
         ./build.sh simutrans
+        mv /android-sdl/project/app/build/outputs/apk/release/app-release.apk ./simuandroid-multi-nightly.apk
+
+    - name: Update binaries of Nightly Release
+      working-directory: /android-sdl
+      uses: svenstaro/upload-release-action@v1-release
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: ./simuandroid-multi-nightly.apk
+        asset_name: simuandroid-multi-nightly.apk
+        tag: Nightly
+        overwrite: true
