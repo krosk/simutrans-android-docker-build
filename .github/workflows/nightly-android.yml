@@ -42,7 +42,8 @@ jobs:
     # licenses required for android should be stored sdk in repository; for now, they are stored in <root>/licenses
     - name: install_licenses
       run: |
-        sudo cp $GITHUB_WORKSPACE/licenses /opt/android-sdk-linux/licenses
+        sudo cp -r $GITHUB_WORKSPACE/licenses /opt/android-sdk-linux/licenses
+        sudo ls -al /opt/android-sdk-linux/licenses
 
     - name: install_android_sdk_dependencies
       working-directory: /opt/android-sdk-linux
