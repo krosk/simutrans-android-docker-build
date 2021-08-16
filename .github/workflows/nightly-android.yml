@@ -31,42 +31,32 @@ jobs:
     - name: install_android_sdk_tools
       working-directory: /opt/android-sdk-linux
       run: |
-        echo "A"
         wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip
-        ls -al
-        echo "B"
         unzip commandlinetools-linux-7583922_latest.zip
-        ls -al
-        echo "C"
+        rm commandlinetools-linux-7583922_latest.zip
         mv cmdline-tools latest
-        ls -al
-        echo "D"
         mkdir cmdline-tools 
-        ls -al
-        echo "E"
         mv latest cmdline-tools/latest
-        ls -al
-        echo "F"
         echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
 
     # licenses required for android should be stored sdk in repository; for now, they are stored in <root>/licenses
     - name: install_licenses
       run: |
-        cp $GITHUB_WORKSPACE/licenses /opt/android-sdk-linux/licenses
+        sudo cp $GITHUB_WORKSPACE/licenses /opt/android-sdk-linux/licenses
 
     - name: install_android_sdk_dependencies
       working-directory: /opt/android-sdk-linux
       run: |
-        yes | sdkmanager --install "platform-tools"
+        yes | sudo sdkmanager --install "platform-tools"
         echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
-        yes | sdkmanager --install "build-tools;30.0.3"
+        yes | sudo sdkmanager --install "build-tools;30.0.3"
         echo "$ANDROID_HOME/build-tools/30.0.3" >> $GITHUB_PATH
-        yes | sdkmanager --install "cmake;3.18.1"
+        yes | sudo sdkmanager --install "cmake;3.18.1"
         echo "$ANDROID_HOME/cmake/3.18.1/bin" >> $GITHUB_PATH
-        yes | sdkmanager --install "ndk;23.0.7599858"
+        yes | sudo sdkmanager --install "ndk;23.0.7599858"
         echo "$ANDROID_HOME/ndk/23.0.7599858" >> $GITHUB_PATH
         echo "$ANDROID_HOME/ndk/23.0.7599858/toolchains/llvm/prebuilt/linux-x86_64/bin/" >> $GITHUB_PATH
-        ln -s llvm-objdump ${ANDROID_HOME}/ndk/23.0.7599858/toolchains/llvm/prebuilt/linux-x86_64/bin/objdump
+        sudo ln -s llvm-objdump ${ANDROID_HOME}/ndk/23.0.7599858/toolchains/llvm/prebuilt/linux-x86_64/bin/objdump
 
     - name: install_keystore_for_android_apk_signing
       run: |
