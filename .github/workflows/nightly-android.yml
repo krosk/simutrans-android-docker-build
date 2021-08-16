@@ -41,17 +41,13 @@ jobs:
     - name: install_android_sdk_tools_path
       working-directory: /opt/android-sdk-linux
       run: |
-        sudo ls -al $ANDROID_HOME
-        sudo ls -al
         echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
-        echo $PATH
 
     # licenses required for android should be stored sdk in repository; for now, they are stored in <root>/licenses
     - name: install_licenses
       run: |
         sudo cp -r $GITHUB_WORKSPACE/licenses /opt/android-sdk-linux/licenses
         sudo ls -al /opt/android-sdk-linux/licenses
-        echo $PATH
 
     - name: install_android_sdk_dependencies
       working-directory: /opt/android-sdk-linux
@@ -65,12 +61,11 @@ jobs:
         yes | sdkmanager --install "ndk;23.0.7599858"
         echo "$ANDROID_HOME/ndk/23.0.7599858" >> $GITHUB_PATH
         echo "$ANDROID_HOME/ndk/23.0.7599858/toolchains/llvm/prebuilt/linux-x86_64/bin/" >> $GITHUB_PATH
-        ln -s llvm-objdump ${ANDROID_HOME}/ndk/23.0.7599858/toolchains/llvm/prebuilt/linux-x86_64/bin/objdump
+        sudo ln -s llvm-objdump ${ANDROID_HOME}/ndk/23.0.7599858/toolchains/llvm/prebuilt/linux-x86_64/bin/objdump
 
     - name: install_keystore_for_android_apk_signing
       run: |
-        sudo mkdir /root/.android/
-        sudo keytool -genkey -v -keystore /root/.android/debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -keypass android -storepass android -dname "cn=example.com,ou=exampleou,dc=example,dc=com"
+        sudo mkdir /root/.android/ || keytool -genkey -v -keystore /root/.android/debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -keypass android -storepass android -dname "cn=example.com,ou=exampleou,dc=example,dc=com"
 
     - name: checkout_libsdl_android
       working-directory: /android-sdl
