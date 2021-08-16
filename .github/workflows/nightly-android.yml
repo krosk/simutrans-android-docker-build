@@ -23,6 +23,11 @@ jobs:
         echo "ANDROID_SDK_ROOT=/opt/android-sdk-linux" >> $GITHUB_ENV
         echo "ANDROID_SDK=/opt/android-sdk-linux" >> $GITHUB_ENV
 
+    - name: create_working_directory_for_next_steps
+      run: |
+        mkdir /opt/android-sdk-linux
+        mkdir /android-sdl
+
     - name: install_android_sdk_tools
       working-directory: /opt/android-sdk-linux
       run: |
