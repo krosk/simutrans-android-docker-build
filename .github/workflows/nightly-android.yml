@@ -1,36 +1,86 @@
-# This is a basic workflow to help you get started with Actions
+name: Nightly build Android
 
-name: CI
+on: [push]
 
-# Controls when the workflow will run
-on:
-  # Triggers the workflow on push or pull request events but only for the master branch
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
-
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   build:
-    # The type of runner that the job will run on
+
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+    - uses: actions/checkout@v2
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
+    - name: install_dependencies
+      run: |
+        dpkg --add-architecture i386
+        apt-get -yqq update
+        apt-get -ym install curl expect git libc6:i386 libgcc1:i386 libncurses5:i386 libstdc++6:i386 zlib1g:i386 openjdk-8-jdk wget unzip vim make subversion zip
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
-        run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+    - name: setup_environment_variables
+      run: |
+        echo "ANDROID_HOME=/opt/android-sdk-linux" >> $GITHUB_ENV
+        echo "ANDROID_SDK_HOME=/opt/android-sdk-linux" >> $GITHUB_ENV
+        echo "ANDROID_SDK_ROOT=/opt/android-sdk-linux" >> $GITHUB_ENV
+        echo "ANDROID_SDK=/opt/android-sdk-linux" >> $GITHUB_ENV
+
+    - name: install_android_sdk_tools
+      working-directory: /opt/android-sdk-linux
+      run: |
+        wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip && unzip commandlinetools-linux-7583922_latest.zip && rm commandlinetools-linux-7583922_latest.zip
+        mv cmdline-tools latest && mkdir cmdline-tools && mv latest cmdline-tools/latest
+        echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
+
+    # licenses required for android should be stored sdk in repository; for now, they are stored in <root>/licenses
+    - name: install_licenses
+      run: |
+        cp $GITHUB_WORKSPACE/licenses /opt/android-sdk-linux/licenses
+
+    - name: install_android_sdk_dependencies
+      working-directory: /opt/android-sdk-linux
+      run: |
+        yes | sdkmanager --install "platform-tools"
+        echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
+        yes | sdkmanager --install "build-tools;30.0.3"
+        echo "$ANDROID_HOME/build-tools/30.0.3" >> $GITHUB_PATH
+        yes | sdkmanager --install "cmake;3.18.1"
+        echo "$ANDROID_HOME/cmake/3.18.1/bin" >> $GITHUB_PATH
+        yes | sdkmanager --install "ndk;23.0.7599858"
+        echo "$ANDROID_HOME/ndk/23.0.7599858" >> $GITHUB_PATH
+        echo "$ANDROID_HOME/ndk/23.0.7599858/toolchains/llvm/prebuilt/linux-x86_64/bin/" >> $GITHUB_PATH
+        ln -s llvm-objdump ${ANDROID_HOME}/ndk/23.0.7599858/toolchains/llvm/prebuilt/linux-x86_64/bin/objdump
+
+    - name: install_keystore_for_android_apk_signing
+      run: |
+        mkdir /root/.android/
+        keytool -genkey -v -keystore /root/.android/debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -keypass android -storepass android -dname "cn=example.com,ou=exampleou,dc=example,dc=com"
+
+    - name: checkout_libsdl_android
+      working-directory: /android-sdl
+      run: |
+        git init && git remote add origin https://github.com/pelya/commandergenius.git && git fetch origin c470f348c4d7afdbdffce4cfebe5265bd798f699 && git reset --hard FETCH_HEAD
+
+    - name: setup_licenses_for_gradle
+      working-directory: /android-sdl
+      run: |
+        ln -s $ANDROID_HOME/licenses project/licenses
+
+    # pelya building script expects that 1/ simutrans is found inside /android-sdl/project/jni/application/simutrans/simutrans and 2/ that it is a svn repo
+    # therefore the content below is not adapted for simutrans repository
+    - name: setup_android_sdl_working_folder
+      working-directory: /android-sdl
+      run: |
+        svn checkout -r 9274 https://github.com/aburch/simutrans/trunk project/jni/application/simutrans/simutrans
+        wget https://downloads.sourceforge.net/project/simutrans/pak64/122-0/simupak64-122-0.zip
+        unzip ./simupak64-122-0.zip -d project/jni/application/simutrans/simutrans/
+
+    # until the patch below is accepted in pelya source
+    - name: patch_android_sdl
+      working-directory: /android-sdl
+      run: |
+        cp $GITHUB_WORKSPACE/patch .
+        git apply *.patch
+
+    - name: build
+      working-directory: /android-sdl
+      run: |
+        ./build.sh simutrans
