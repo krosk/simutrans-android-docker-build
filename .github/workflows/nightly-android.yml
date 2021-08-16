@@ -65,7 +65,7 @@ jobs:
 
     - name: install_keystore_for_android_apk_signing
       run: |
-        sudo mkdir /root/.android/ || keytool -genkey -v -keystore /root/.android/debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -keypass android -storepass android -dname "cn=example.com,ou=exampleou,dc=example,dc=com"
+        sudo mkdir /root/.android/ || sudo keytool -genkey -v -keystore /root/.android/debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -keypass android -storepass android -dname "cn=example.com,ou=exampleou,dc=example,dc=com"
 
     - name: checkout_libsdl_android
       working-directory: /android-sdl
