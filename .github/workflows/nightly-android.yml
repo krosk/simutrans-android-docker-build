@@ -10,20 +10,20 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: install_dependencies
+    - name: Install dependencies
       run: |
         sudo dpkg --add-architecture i386
         sudo apt-get -yqq update
         sudo apt-get -ym install curl expect git libc6:i386 libgcc1:i386 libncurses5:i386 libstdc++6:i386 zlib1g:i386 openjdk-8-jdk wget unzip vim make subversion zip
 
-    - name: setup_environment_variables
+    - name: Setup Android SDK environment variables
       run: |
         echo "ANDROID_HOME=/opt/android-sdk-linux" >> $GITHUB_ENV
         echo "ANDROID_SDK_HOME=/opt/android-sdk-linux" >> $GITHUB_ENV
         echo "ANDROID_SDK_ROOT=/opt/android-sdk-linux" >> $GITHUB_ENV
         echo "ANDROID_SDK=/opt/android-sdk-linux" >> $GITHUB_ENV
 
-    - name: create_working_directory_for_next_steps
+    - name: Create working directory for next steps
       run: |
         sudo mkdir /opt/android-sdk-linux
         sudo mkdir /android-sdl
@@ -31,9 +31,8 @@ jobs:
         sudo chgrp -R docker /opt/android-sdk-linux
         sudo chown -R runner /android-sdl
         sudo chgrp -R docker /android-sdl
-        ls -al 
 
-    - name: install_android_sdk_tools
+    - name: Install Android SDK tools
       working-directory: /opt/android-sdk-linux
       run: |
         wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip
@@ -42,19 +41,17 @@ jobs:
         mv cmdline-tools latest
         mkdir cmdline-tools 
         mv latest cmdline-tools/latest
-
-    - name: install_android_sdk_tools_path
-      working-directory: /opt/android-sdk-linux
-      run: |
         echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
 
-    # licenses required for android should be stored sdk in repository; for now, they are stored in <root>/licenses
-    - name: install_licenses
+    # licenses required for Android SDK must be found somewhere; them being rather simple they are hardcoded here, but they could also be stored as files
+    - name: Setup licenses files for Android SDK
+      working-directory: /opt/android-sdk-linux
       run: |
-        cp -r $GITHUB_WORKSPACE/licenses /opt/android-sdk-linux/licenses
-        ls -al /opt/android-sdk-linux/licenses
+        mkdir licenses
+        echo "\n8933bad161af4178b1185d1a37fbf41ea5269c55\n24333f8a63b6825ea9c5514f83c2829b004d1fee" >> licenses/android-sdk-license
+        echo "\n84831b9409646a918e30573bab4c9c91346d8abd" >> licenses/android-sdk-preview-license
 
-    - name: install_android_sdk_dependencies
+    - name: Install Android SDK dependencies
       working-directory: /opt/android-sdk-linux
       run: |
         yes | sdkmanager --install "platform-tools"
@@ -68,40 +65,42 @@ jobs:
         echo "$ANDROID_HOME/ndk/23.0.7599858/toolchains/llvm/prebuilt/linux-x86_64/bin/" >> $GITHUB_PATH
         ln -s llvm-objdump ${ANDROID_HOME}/ndk/23.0.7599858/toolchains/llvm/prebuilt/linux-x86_64/bin/objdump
 
-    - name: install_keystore_for_android_apk_signing
+    - name: Install keystore for Android APK signing
       run: |
         mkdir /home/runner/.android/
         keytool -genkey -v -keystore /home/runner/.android/debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -keypass android -storepass android -dname "cn=example.com,ou=exampleou,dc=example,dc=com"
-        ls -al /home/runner/.android/
 
-    - name: checkout_libsdl_android
+    - name: Checkout lib Android SDL by pelya (hard coded version)
       working-directory: /android-sdl
       run: |
         git init && git remote add origin https://github.com/pelya/commandergenius.git && git fetch origin c470f348c4d7afdbdffce4cfebe5265bd798f699 && git reset --hard FETCH_HEAD
 
-    - name: setup_licenses_for_gradle
+    - name: Setup licenses for Gradle
       working-directory: /android-sdl
       run: |
         ln -s $ANDROID_HOME/licenses project/licenses
 
-    # pelya building script expects that 1/ simutrans is found inside /android-sdl/project/jni/application/simutrans/simutrans and 2/ that it is a svn repo
+    # pelya building script expects that 1/ simutrans is found inside /android-sdl/project/jni/application/simutrans/simutrans and 2/ that it is a svn repo, as revision.h is populated by svn command line
     # therefore the content below is not adapted for simutrans repository
-    - name: setup_android_sdl_working_folder
+    - name: Setup Android SDL working folder to host Simutrans
       working-directory: /android-sdl
       run: |
-        svn checkout -r 9274 https://github.com/aburch/simutrans/trunk project/jni/application/simutrans/simutrans
+        svn checkout -r 9274 svn://servers.simutrans.org/simutrans/trunk project/jni/application/simutrans/simutrans
+    
+    - name: Add default pakset
+      working-directory: /android-sdl
+      run: |
         wget https://downloads.sourceforge.net/project/simutrans/pak64/122-0/simupak64-122-0.zip
         unzip ./simupak64-122-0.zip -d project/jni/application/simutrans/simutrans/
 
-    # until the patch below is accepted in pelya source
-    - name: patch_android_sdl
+    # some temporary changes to Android SDL are stored in <repo>/patch
+    - name: (Temporary) Patch Android SDL
       working-directory: /android-sdl
       run: |
         cp -r $GITHUB_WORKSPACE/patch/*.patch .
-        ls -al
         git apply *.patch
 
-    - name: build
+    - name: Build Simutrans
       working-directory: /android-sdl
       run: |
         ./build.sh simutrans
