@@ -95,7 +95,7 @@ jobs:
     - name: patch_android_sdl
       working-directory: /android-sdl
       run: |
-        cp -r $GITHUB_WORKSPACE/patch .
+        cp -r $GITHUB_WORKSPACE/patch/*.patch .
         ls -al
         git apply *.patch
 
