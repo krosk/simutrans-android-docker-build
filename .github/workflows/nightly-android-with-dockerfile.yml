@@ -10,10 +10,15 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: build
+    - name: build_environment
       id: docker_build
       uses: docker/build-push-action@v2
       with:
         file: ./Dockerfile
         push: false
+        tags: build_environment:latest
 
+    - uses: addnab/docker-run-action@v3
+      with:
+        image: build_environment:latest
+        run: ./build.sh simutrans
