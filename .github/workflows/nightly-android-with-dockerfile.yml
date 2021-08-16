@@ -1,0 +1,20 @@
+name: Nightly build Android and Dockerfile
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: build
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          context: $GITHUB_WORKSPACE
+          file: ./Dockerfile
+          push: false
+
