@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:latest
 
 # Inspired from https://github.com/docker-android-sdk/android-21
 ENV DEBIAN_FRONTEND=noninteractive
