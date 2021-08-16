@@ -12,9 +12,9 @@ jobs:
 
     - name: install_dependencies
       run: |
-        dpkg --add-architecture i386
-        apt-get -yqq update
-        apt-get -ym install curl expect git libc6:i386 libgcc1:i386 libncurses5:i386 libstdc++6:i386 zlib1g:i386 openjdk-8-jdk wget unzip vim make subversion zip
+        sudo dpkg --add-architecture i386
+        sudo apt-get -yqq update
+        sudo apt-get -ym install curl expect git libc6:i386 libgcc1:i386 libncurses5:i386 libstdc++6:i386 zlib1g:i386 openjdk-8-jdk wget unzip vim make subversion zip
 
     - name: setup_environment_variables
       run: |
@@ -51,8 +51,8 @@ jobs:
 
     - name: install_keystore_for_android_apk_signing
       run: |
-        mkdir /root/.android/
-        keytool -genkey -v -keystore /root/.android/debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -keypass android -storepass android -dname "cn=example.com,ou=exampleou,dc=example,dc=com"
+        sudo mkdir /root/.android/
+        sudo keytool -genkey -v -keystore /root/.android/debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -keypass android -storepass android -dname "cn=example.com,ou=exampleou,dc=example,dc=com"
 
     - name: checkout_libsdl_android
       working-directory: /android-sdl
