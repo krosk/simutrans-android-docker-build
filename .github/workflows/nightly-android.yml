@@ -37,13 +37,21 @@ jobs:
         mv cmdline-tools latest
         mkdir cmdline-tools 
         mv latest cmdline-tools/latest
+
+    - name: install_android_sdk_tools_path
+      working-directory: /opt/android-sdk-linux
+      run: |
+        sudo ls -al $ANDROID_HOME
+        sudo ls -al
         echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
+        echo $PATH
 
     # licenses required for android should be stored sdk in repository; for now, they are stored in <root>/licenses
     - name: install_licenses
       run: |
         sudo cp -r $GITHUB_WORKSPACE/licenses /opt/android-sdk-linux/licenses
         sudo ls -al /opt/android-sdk-linux/licenses
+        echo $PATH
 
     - name: install_android_sdk_dependencies
       working-directory: /opt/android-sdk-linux
