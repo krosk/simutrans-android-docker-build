@@ -27,6 +27,7 @@ jobs:
       run: |
         sudo mkdir /opt/android-sdk-linux
         sudo mkdir /android-sdl
+        ls -al 
 
     - name: install_android_sdk_tools
       working-directory: /opt/android-sdk-linux
@@ -70,12 +71,12 @@ jobs:
     - name: checkout_libsdl_android
       working-directory: /android-sdl
       run: |
-        git init && git remote add origin https://github.com/pelya/commandergenius.git && git fetch origin c470f348c4d7afdbdffce4cfebe5265bd798f699 && git reset --hard FETCH_HEAD
+        sudo git init && sudo git remote add origin https://github.com/pelya/commandergenius.git && sudo git fetch origin c470f348c4d7afdbdffce4cfebe5265bd798f699 && sudo git reset --hard FETCH_HEAD
 
     - name: setup_licenses_for_gradle
       working-directory: /android-sdl
       run: |
-        ln -s $ANDROID_HOME/licenses project/licenses
+        sudo ln -s $ANDROID_HOME/licenses project/licenses
 
     # pelya building script expects that 1/ simutrans is found inside /android-sdl/project/jni/application/simutrans/simutrans and 2/ that it is a svn repo
     # therefore the content below is not adapted for simutrans repository
