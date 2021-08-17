@@ -15,10 +15,10 @@ on:
         default: '9274'
       paksetLink:
         description: 'Link to embedded default pakset (ex https://downloads.sourceforge.net/project/simutrans/pak64/122-0/simupak64-122-0.zip)'
-        default: env.DEFAULT_PAKSETLINK
+        default: ${{ env.DEFAULT_PAKSETLINK }}
       paksetFile:
         description: 'Matching pakset file name (ex simupak64-122-0.zip)'
-        default: env.DEFAULT_PAKSETFILE
+        default: ${{ env.DEFAULT_PAKSETFILE }}
 
 jobs:
   build:
