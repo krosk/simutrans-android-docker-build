@@ -73,7 +73,7 @@ RUN wget https://downloads.sourceforge.net/project/simutrans/pak64/122-0/simupak
 RUN unzip ./simupak64-122-0.zip -d project/jni/application/simutrans/simutrans/
 
 COPY .github .
-RUN git apply .github/android/*.patch
+RUN git apply android/*.patch
 
 # build with
 # ./build.sh simutrans
