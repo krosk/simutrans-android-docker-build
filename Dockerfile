@@ -72,8 +72,8 @@ RUN svn checkout -r 9274 svn://servers.simutrans.org/simutrans/trunk project/jni
 RUN wget https://downloads.sourceforge.net/project/simutrans/pak64/122-0/simupak64-122-0.zip
 RUN unzip ./simupak64-122-0.zip -d project/jni/application/simutrans/simutrans/
 
-COPY patch .
-RUN git apply *.patch
+COPY .github .
+RUN git apply .github/patch/*.patch
 
 # build with
 # ./build.sh simutrans
