@@ -118,12 +118,14 @@ jobs:
         wget ${{ github.event.inputs.paksetLink || env.DEFAULT_PAKSETLINK }}
         unzip ./${{ github.event.inputs.paksetFile || env.DEFAULT_PAKSETFILE }} -d project/jni/application/simutrans/simutrans/
 
-    # some temporary changes to Android SDL are stored in <repo>/patch
-    - name: (Temporary) Patch Android SDL
+    # some temporary changes to Android SDL are stored in <repo>/.github/android
+    - name: (Temporary) Patch Android SDL and replace version
       working-directory: /android-sdl
       run: |
-        cp -r $GITHUB_WORKSPACE/patch/*.patch .
+        cp -r $GITHUB_WORKSPACE/.github/android/*.patch .
         git apply *.patch
+        sed -i "s/^AppVersionCode=[0-9]\+/AppVersionCode=$(svnversion project/jni/application/simutrans/simutrans)/" ./project/jni/application/simutrans/AndroidAppSettings.cfg
+        sed -i "s/^AppVersionName=\"[0-9]\+.[0-9]\+\"/AppVersionName=\"r$(svnversion project/jni/application/simutrans/simutrans)\"/" ./project/jni/application/simutrans/AndroidAppSettings.cfg
 
     - name: Build Simutrans
       working-directory: /android-sdl
