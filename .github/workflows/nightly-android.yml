@@ -99,7 +99,7 @@ jobs:
         ln -s $ANDROID_HOME/licenses project/licenses
 
     # pelya building script expects that 1/ simutrans is found inside /android-sdl/project/jni/application/simutrans/simutrans and 2/ that it is a svn repo, as revision.h is populated by svn command line
-    # therefore the content below is not adapted for simutrans repository
+    # the content of actions/checkout is a git repo so it is not compatible
     - name: Setup Android SDL working folder to host Simutrans (latest)
       working-directory: /android-sdl
       if: ${{ github.event.inputs.revision == '' }}
@@ -112,6 +112,8 @@ jobs:
       run: |
         svn checkout -r ${{ github.event.inputs.revision }} svn://servers.simutrans.org/simutrans/trunk project/jni/application/simutrans/simutrans
     
+    # End of environment setup (dependencies installed, source code at correct location)
+    # Start of package customization
     - name: Add default pakset
       working-directory: /android-sdl
       run: |
