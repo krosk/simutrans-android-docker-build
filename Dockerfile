@@ -62,7 +62,7 @@ RUN adb keygen /root/.android/adbkey
 # Clone libsdl-android source from specific commit; we patch from that version
 
 WORKDIR /android-sdl
-RUN git init && git remote add origin https://github.com/pelya/commandergenius.git && git fetch origin c470f348c4d7afdbdffce4cfebe5265bd798f699 && git reset --hard FETCH_HEAD
+RUN git init && git remote add origin https://github.com/pelya/commandergenius.git && git fetch origin 22e2154d7e0105a06b067751c2f7ab4c134a9f1b && git reset --hard FETCH_HEAD
 
 # Link to existing licenses upon calling build.sh; to prepare Gradle for installation of another, version-appropriate SDK (ANDROID_HOME could become /android-sdl/project, but paths are project dependant and defined only after Gradle)
 
@@ -80,4 +80,4 @@ ENV GIT_DISCOVERY_ACROSS_FILESYSTEM true
 
 # patch libsdl-android
 COPY .github .
-RUN git apply android/*.patch
+RUN if [ -f android/*.patch ]; then git apply android/*.patch; fi; 
