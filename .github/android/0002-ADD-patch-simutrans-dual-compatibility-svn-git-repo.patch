@@ -1,0 +1,31 @@
+From 1c8175369c4cbe5270a795a8a43ed4f3e39ad134 Mon Sep 17 00:00:00 2001
+From: Alexis He <ahe.krosk@gmail.com>
+Date: Thu, 19 Aug 2021 09:14:25 +0200
+Subject: [PATCH] ADD: patch simutrans dual compatibility svn/git repo
+
+---
+ project/jni/application/simutrans/AndroidBuild.sh | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/project/jni/application/simutrans/AndroidBuild.sh b/project/jni/application/simutrans/AndroidBuild.sh
+index e6ce916eb..95c7fa1d4 100755
+--- a/project/jni/application/simutrans/AndroidBuild.sh
++++ b/project/jni/application/simutrans/AndroidBuild.sh
+@@ -16,7 +16,13 @@ echo USE_FLUIDSYNTH_MIDI=1 >> config.$1.txt
+ 
+ cmake -E copy_if_different config.$1.txt config.$1
+ 
+-echo "#define REVISION `svn info --show-item revision`" > revision.h.txt
++# check first if svn repo; otherwise fallback to git repo
++svn info --show-item revision
++if [ $? -eq 0 ]; then
++    echo "#define REVISION `svn info --show-item revision`" > revision.h.txt
++else
++    echo "#define REVISION `git svn find-rev $(git log origin --max-count 1 --pretty=format:%H)`" > revision.h.txt
++fi
+ cmake -E copy_if_different revision.h.txt revision.h
+ 
+ env CFLAGS="-fpermissive" \
+-- 
+2.28.0.windows.1
+
