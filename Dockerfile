@@ -10,7 +10,7 @@ ENV ANDROID_SDK       ${ANDROID_HOME}
 
 RUN dpkg --add-architecture i386 && \
     apt-get update -yqq && \
-    apt-get install -y curl expect git libc6:i386 libgcc1:i386 libncurses5:i386 libstdc++6:i386 zlib1g:i386 openjdk-8-jdk wget unzip vim make subversion zip && \
+    apt-get install -y curl expect git git-svn libc6:i386 libgcc1:i386 libncurses5:i386 libstdc++6:i386 zlib1g:i386 make nano openjdk-8-jdk subversion unzip vim wget zip && \
     apt-get clean
 
 RUN groupadd android && useradd -d /opt/android-sdk-linux -g android android
@@ -50,13 +50,16 @@ ENV PATH "${PATH}:${ANDROID_HOME}/ndk/23.0.7599858/toolchains/llvm/prebuilt/linu
 RUN ln -s llvm-objdump ${ANDROID_HOME}/ndk/23.0.7599858/toolchains/llvm/prebuilt/linux-x86_64/bin/objdump
 
 
-# Add default keystore, required by build.sh; docker executes as root so the keystore goes into root
+# Add default keystore, required by build.sh, and retrieved from ~/.android/; docker executes as root so the keystore goes into /root/.android
 
 RUN mkdir /root/.android/
 RUN keytool -genkey -v -keystore /root/.android/debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -keypass android -storepass android -dname "cn=example.com,ou=exampleou,dc=example,dc=com"
 
+# Add default adb keygen so it is persistent across builds
+RUN adb keygen /root/.android/adbkey
 
-# Clone android sdl source from specific commit
+
+# Clone libsdl-android source from specific commit; we patch from that version
 
 WORKDIR /android-sdl
 RUN git init && git remote add origin https://github.com/pelya/commandergenius.git && git fetch origin c470f348c4d7afdbdffce4cfebe5265bd798f699 && git reset --hard FETCH_HEAD
@@ -65,17 +68,16 @@ RUN git init && git remote add origin https://github.com/pelya/commandergenius.g
 
 RUN ln -s $ANDROID_HOME/licenses project/licenses
 
-# Clone simutrans
-# Fix: explicit checkout of a target version known for passing compile with clang; last is 9774, first is 8400
-RUN svn checkout -r 9274 svn://servers.simutrans.org/simutrans/trunk project/jni/application/simutrans/simutrans
+# Link to source; 
+# The proposal is a volume mount of a host folder (<host>/simutrans/.git), to /android-sdl/project/jni/application/simutrans/simutrans.git. This requires to launch container directly from the root folder of simutrans repository in host, such as docker run -rm -it %cd%:/android-sdl/project/jni/application/simutrans/.
+# Make sure the source has a pak provided
 # download required pak and install it; the file to get depends on version
-RUN wget https://downloads.sourceforge.net/project/simutrans/pak64/122-0/simupak64-122-0.zip
-RUN unzip ./simupak64-122-0.zip -d project/jni/application/simutrans/simutrans/
+# RUN wget https://downloads.sourceforge.net/project/simutrans/pak64/122-0/simupak64-122-0.zip
+# RUN unzip ./simupak64-122-0.zip -d project/jni/application/simutrans/simutrans/
 
+# Line below required when container system is trying to cross the volume mount boundary, where filesystems can be distinct (Linux/Windows boundary)
+ENV GIT_DISCOVERY_ACROSS_FILESYSTEM true
+
+# patch libsdl-android
 COPY .github .
 RUN git apply android/*.patch
-
-# build with
-# ./build.sh simutrans
-# or
-# ./build.sh -i simutrans
