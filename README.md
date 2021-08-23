@@ -38,3 +38,23 @@ On build environment docker container:
  1. Run ```adb connect <target-device-ip>```
  2. If done the first time, allow USB debugging on target android device from the new computer; if it may report failed to authenticate on container console, but as soon as the prompt is accepted on target android device, the connection will be established. Subsequent attempts should be automatic.
  3. Run ```./build.sh -i simutrans```. It will generate an APK at ```/android-sdl/apk-release.apk``` and attempt to install it on device.
+
+# Logging
+
+Add the following defines
+```
+#include <android/log.h>
+#define  LOG_TAG    "SIMUTRANS"
+#define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
+```
+
+Put a log message with
+```
+LOGD("text %s", message)
+```
+
+Capture with (on host)
+```
+> adb connect <device_ip>
+> adb logcat -s SIMUTRANS
+```
