@@ -44,3 +44,23 @@ On file ```project/jni/application/simutrans/AndroidAppSettings.cfg```, change `
     ./project/jni/application/simutrans/simutrans/sound/sdl2_sound.cc
     ```
 * SDL2 does not include some resources in vim project/javaSDL2/translations/values/strings.xml
+
+# Proper cleaning
+
+* ```android-sdl/project/obj/local``` contains build objects; it must be cleaned for libraries to rebuild/redownload.
+
+
+# Fluidsynth investigation
+
+* Version embedded by pelya, identified to be 1.1.3, from https://github.com/FluidSynth/fluidsynth, with some custom changes, likely due to Clang compiler not being compatible out of the box. But not managed to replace the version because there are too many source code changes.
+* Fluidsynth has provided android pre-built libraries. Adding pre-built libraries is possible via gradle by making an Android.mk file that adds prebuilt libs; this require extensive modification of pelya repository. 
+* Fluidsynth android pre-built does not expose logging functions, so we cannot use fluid_set_log_function(). The workaround is fluidsynth by default output to stderr, so it is possible to duplicate the output of stderr to logcat https://codelab.wordpress.com/2014/11/03/how-to-use-standard-output-streams-for-logging-in-android-apps/; the snippet in this link requires ```#include <unistd.h>```, but it is not functional.
+* Fluidsynth android pre-built is linked against libc++_shared from ndk r21, which exposes the symbol lttf2. This symbol is not exposed on ndk r23, so a manual copy of the .so from fluidsynth pre-built has been copied into the SDK at that location /opt/android-sdk-linux/ndk/23.0.7599858/sources/cxx-stl/llvm-libc++/libs/
+
+Successful music! The action items are:
+* make a clone of pelya repository
+* add the prebuilt libraries + Android.mk build scripts; should we auto download them? from which package? https://github.com/FluidSynth/fluidsynth/releases/download/v2.2.2/fluidsynth-2.2.2-android.zip contains libraries that have some of their dependencies statically linked, so it reduces cross dependence; it is a better target than the fluidsynth pipeline on circleci.
+* refer to the clone of pelya repository on android build pipeline instead of the original
+* make a hard copy of c++shared upon build
+
+The location of the sf2 file is ideally found in music, as expected from simutrans. A way to do it is to download it to include in the data.zip as part of the source code, a bit the same way it is done for pak.

@@ -39,6 +39,22 @@ On build environment docker container:
  2. If done the first time, allow USB debugging on target android device from the new computer; if it may report failed to authenticate on container console, but as soon as the prompt is accepted on target android device, the connection will be established. Subsequent attempts should be automatic.
  3. Run ```./build.sh -i simutrans```. It will generate an APK at ```/android-sdl/apk-release.apk``` and attempt to install it on device.
 
+# Link to source code for both pelya and simutrans repository
+
+ 1. From ```<simutrans>```, start the build environment docker container with (windows) ```docker run --rm -it -v <host_path_to_libsdl_repository>:/android-sdl -v %cd%:/android-sdl/project/jni/application/simutrans/simutrans <image-tag> bash```. 
+ 2. Run ```ln -s $ANDROID_HOME/licenses project/licenses``` once at docker container start
+cp project/jni/all/arm64-v8a/libc++_shared.so /opt/android-sdk-linux/ndk/23.0.7599858/sources/cxx-stl/llvm-libc++/libs/arm64-v8a/libc++_shared.so
+
+# Cleaning
+
+Cleaning the APK generation, in particular if there is an error about unaligned resources:
+ 1. From ```<root>```, run ```cd project; ./gradlew clean; cd ..```
+
+Cleaning the native C/C++ code:
+ 2. Remove ```<root>/project/obj```
+
+Cleaning the two above should ensure full rebuild.
+
 # Logging
 
 Add the following defines
@@ -53,8 +69,17 @@ Put a log message with
 LOGD("text %s", message)
 ```
 
-Capture with (on host)
+Capture most sources with errors with (on host)
 ```
 > adb connect <device_ip>
-> adb logcat -s SIMUTRANS
+> adb logcat -s SIMUTRANS libc DEBUG crashdump64 AndroidRuntime
 ```
+
+Capture library load failing with
+```
+> adb connect <device_ip>
+> adb logcat -s AndroidRuntime
+```
+
+Identify missing library with:
+```objdump -x project/jni/all/arm64-v8a/*.so | grep <symbol>```
