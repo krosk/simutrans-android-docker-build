@@ -8,6 +8,7 @@
 * the compiler armv7a-linux-androideabi16-clang++, used by simutrans, is only found on ndk (side-by-side) 19.2.5345600; it could be there is such expectation
 * as of 15/08/21, the commit https://github.com/aburch/simutrans/commit/446284d85e8df07fffc73bfb200a23086d562388#diff-df72854a6bd7c93a0632db453e323a8cab4212fe5664607191b16252c62f905a introduces problems in compilation due to fluidsynth. This is SVN revision 9775.
 * as of 15/08/21, --no-rosegment is requested during linking. However, NDK r19 does not provide this argument (see https://github.com/android/ndk/issues/1426 + ld --version).
+* build scripts requires objdump; llvm-objdump is found for ndk21+; a platform specific one can be found on ndk20 and below.
 * there is a discrepancy between svn revision rX and the @ from git svn trunk; so the versions a built are slightly different.
 * symlink to simutrans folder do not play well with the build scripts as they tend to cd into the simutrans folder then refer to objects far in parents. Mounting directly a source folder to a subdirectory looks like it is the only safe solution to link source.
 * certificates seem to change over each build iteration, making 'overwrite install' impossible and requiring to uninstall then reinstall.
@@ -49,7 +50,6 @@ On file ```project/jni/application/simutrans/AndroidAppSettings.cfg```, change `
 
 * ```android-sdl/project/obj/local``` contains build objects; it must be cleaned for libraries to rebuild/redownload.
 
-
 # Fluidsynth investigation
 
 * Version embedded by pelya, identified to be 1.1.3, from https://github.com/FluidSynth/fluidsynth, with some custom changes, likely due to Clang compiler not being compatible out of the box. But not managed to replace the version because there are too many source code changes.
@@ -64,3 +64,35 @@ Successful music! The action items are:
 * make a hard copy of c++shared upon build
 
 The location of the sf2 file is ideally found in music, as expected from simutrans. A way to do it is to download it to include in the data.zip as part of the source code, a bit the same way it is done for pak.
+
+# pak download investigation
+
+* simutrans has an embedded pak download functionality, but it is using systemwide shell commands and will rely on external applications to do it (wget, curl).
+* the most perenne way to do it is to embed the downloading functionality within the game.
+* This poses the issue of libcurl availability
+* pelya source does propose a curl library to build ourselves; I have not found prebuilt libraries like fluidsynth.
+* A nice project could be to provide a fork of libcurl, with prebuilt libraries ready to use, built by github actions, the same way fluidsynth does
+
+# compilers NDK version
+
+```objdump -s --section .comment project/obj/local/x86/libapplication.so```
+to show which compiler has been used to compile. 
+
+* ndk;23.0.7599858 => Android 7284624, based on r416183b, clang 12.0.5
+* ndk;21.4.7075529 => Android 7019983, based on r365631c3, clang 9.0.9 => incompatible simutrans, expects --no-rosegment argument in ```project/jni/application/setEnvironment-xxx.sh```, not available in ndk
+* ndk;20.1.5948944 => Android 5220042, based on r346389c, clang 8.0.7 => incompatible simutrans, expects --no-rosegment argument in ```project/jni/application/setEnvironment-xxx.sh```, not available in ndk
+
+
+pelya updated the scripts in commit 7a548f6259 to be used with NDK 22, and added --no-rosegment from this point onwards. This flag does not seem to be necessary, and patching it out enables earlier versions of the compiler, down to.
+
+libcurl is targetting ndk-bundle which is ndk22. ndk-bundle is subject to compiler change, so let's keep it at targetting a side by side ndk for the time being, which has a fixed version.
+
+There is no reason to downgrade compiler as of now.
+
+
+Fluidsynth and its dependencies has used Android 7019983, based on clang 9.0.9; this targets androidabi24, but not much more information.
+
+# api target
+
+16 for 32 bit systems (arm7 or x86)
+21 for 64 bit systems (arm8 or x64)

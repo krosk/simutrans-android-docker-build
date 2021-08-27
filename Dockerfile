@@ -25,6 +25,11 @@ RUN wget https://dl.google.com/android/repository/commandlinetools-linux-7583922
 RUN mv cmdline-tools latest && mkdir cmdline-tools && mv latest cmdline-tools/latest
 ENV PATH "${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin"
 
+# Add default keystore, required by build.sh, and retrieved from ~/.android/; docker executes as root so the keystore goes into /root/.android
+
+RUN mkdir /root/.android/
+RUN keytool -genkey -v -keystore /root/.android/debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -keypass android -storepass android -dname "cn=example.com,ou=exampleou,dc=example,dc=com"
+
 # Copy licenses before installing packages via sdkmanager; provided license file covers SDK and NDK, but some additional may be required
 
 COPY licenses /opt/android-sdk-linux/licenses
@@ -40,24 +45,19 @@ ENV PATH "${PATH}:${ANDROID_HOME}/build-tools/30.0.3"
 RUN yes | sdkmanager --install "cmake;3.18.1"
 ENV PATH "${PATH}:${ANDROID_HOME}/cmake/3.18.1/bin"
 
-
-# Install ndk, set PATH for ndk-build
-
-RUN yes | sdkmanager --install "ndk;23.0.7599858"
-ENV PATH "${PATH}:${ANDROID_HOME}/ndk/23.0.7599858"
-# Fix: symbolic link for objdump
-ENV PATH "${PATH}:${ANDROID_HOME}/ndk/23.0.7599858/toolchains/llvm/prebuilt/linux-x86_64/bin/"
-RUN ln -s llvm-objdump ${ANDROID_HOME}/ndk/23.0.7599858/toolchains/llvm/prebuilt/linux-x86_64/bin/objdump
-
-
-# Add default keystore, required by build.sh, and retrieved from ~/.android/; docker executes as root so the keystore goes into /root/.android
-
-RUN mkdir /root/.android/
-RUN keytool -genkey -v -keystore /root/.android/debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -keypass android -storepass android -dname "cn=example.com,ou=exampleou,dc=example,dc=com"
-
 # Add default adb keygen so it is persistent across builds
 RUN adb keygen /root/.android/adbkey
 
+# Install ndk, set PATH for ndk-build
+
+RUN yes | sdkmanager --install "ndk;22.1.7171670"
+ENV PATH "${PATH}:${ANDROID_HOME}/ndk/22.1.7171670"
+ENV PATH "${PATH}:${ANDROID_HOME}/ndk/22.1.7171670/toolchains/llvm/prebuilt/linux-x86_64/bin/"
+# Fix: symbolic link for objdump
+# For ndk >= 21
+RUN ln -s llvm-objdump ${ANDROID_HOME}/ndk/22.1.7171670/toolchains/llvm/prebuilt/linux-x86_64/bin/objdump
+# For ndk < 21
+#RUN ln -s x86_64-linux-android-objdump ${ANDROID_HOME}/ndk/20.1.5948944/toolchains/llvm/prebuilt/linux-x86_64/bin/objdump
 
 # Clone libsdl-android source from specific commit; we patch from that version
 
