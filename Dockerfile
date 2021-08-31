@@ -50,19 +50,19 @@ RUN adb keygen /root/.android/adbkey
 
 # Install ndk, set PATH for ndk-build
 
-RUN yes | sdkmanager --install "ndk;22.1.7171670"
-ENV PATH "${PATH}:${ANDROID_HOME}/ndk/22.1.7171670"
-ENV PATH "${PATH}:${ANDROID_HOME}/ndk/22.1.7171670/toolchains/llvm/prebuilt/linux-x86_64/bin/"
+RUN yes | sdkmanager --install "ndk;23.0.7599858"
+ENV PATH "${PATH}:${ANDROID_HOME}/ndk/23.0.7599858"
+ENV PATH "${PATH}:${ANDROID_HOME}/ndk/23.0.7599858/toolchains/llvm/prebuilt/linux-x86_64/bin/"
 # Fix: symbolic link for objdump
 # For ndk >= 21
-RUN ln -s llvm-objdump ${ANDROID_HOME}/ndk/22.1.7171670/toolchains/llvm/prebuilt/linux-x86_64/bin/objdump
+RUN ln -s llvm-objdump ${ANDROID_HOME}/ndk/23.0.7599858/toolchains/llvm/prebuilt/linux-x86_64/bin/objdump
 # For ndk < 21
 #RUN ln -s x86_64-linux-android-objdump ${ANDROID_HOME}/ndk/20.1.5948944/toolchains/llvm/prebuilt/linux-x86_64/bin/objdump
 
 # Clone libsdl-android source from specific commit; we patch from that version
 
 WORKDIR /android-sdl
-RUN git init && git remote add origin https://github.com/krosk/commandergenius.git && git fetch origin 4bc45825086deecb8f55f424d9125591d0e7a59b && git reset --hard FETCH_HEAD
+RUN git init && git remote add origin https://github.com/krosk/commandergenius.git && git fetch origin e5f69261a154cdc1d0a60d8c1e93ecd1973602ae && git reset --hard FETCH_HEAD
 
 
 
