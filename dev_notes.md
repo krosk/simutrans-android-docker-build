@@ -72,6 +72,82 @@ The location of the sf2 file is ideally found in music, as expected from simutra
 * This poses the issue of libcurl availability
 * pelya source does propose a curl library to build ourselves; I have not found prebuilt libraries like fluidsynth.
 * A nice project could be to provide a fork of libcurl, with prebuilt libraries ready to use, built by github actions, the same way fluidsynth does
+* The number of paksets is 17; the prompt window is auto resizing, cutting the list in two.
+
+* list selection works following the rules:
+  * select only focused item if multiselection disabled OR no key modifier pressed
+  * toggle additional item if multiselection is enabled AND CTRL pressed
+* A modern touch based interface would consider it as a togglable list (aka checkboxes, not radio button).
+
+* the various commands used in get_pak.sh have return codes, which according to According to https://stackoverflow.com/questions/5638321/why-child-process-returns-exit-status-32512-in-unix are
+08-27 23:52:54.335  9799  9833 I com.simutrans: Message: action_triggered       shell 1 25
+08-27 23:52:54.368  9799  9833 I com.simutrans: Message: action_triggered       wget 32512 0 0x7F00
+08-27 23:52:54.403  9799  9833 I com.simutrans: Message: action_triggered       curl 512 0 0x0200
+08-27 23:52:54.441  9799  9833 I com.simutrans: Message: action_triggered       tar 256 0 0x0100
+08-27 23:52:54.473  9799  9833 I com.simutrans: Message: action_triggered       unzip 256 0 0x0100
+08-27 23:52:54.498  9799  9833 I com.simutrans: Message: action_triggered       pushd 32512 0 0x7F00
+08-27 23:52:54.523  9799  9833 I com.simutrans: Message: action_triggered       popd 32512 0 0x7F00
+08-27 23:52:54.548  9799  9833 I com.simutrans: Message: action_triggered       ./get_pak 32512 0 0x7F00
+
+Exit code is on mask 0xFF00.
+
+via adb shell:
+wget => 127|wget: inaccessible or not found
+curl => 2|curl: try 'curl --help' or 'curl --manual' for more information
+tar => 1|tar: Needs -txc (see "tar --help")
+unzip => 1|unzip: missing archive filename
+pushd => 127|pushd: inaccessible or not found
+
+
+# curl
+
+curl as provided by pelya relies on two repositories: ssl and crypto. 
+
+The flow is understood as:
+* project/jni/application/Android.mk or project/jni/application/AndroidAppSettings.cfg request the package ssl and crypto.
+* project/jni/application/pkg-config maps openssl|ssl|libssl (they are synonyms) to libssl.so.sdl.1.so and crypto|libcrypto to libcrypto.so.sdl.1.so; meaning the name with special version becomes compilation target
+* project/jni/Makefile.prebuilt has a specific target rule for these compilation target, upon which project/jni/openssl/compile.sh is run, to compile the libs
+ssl and crypto are symbolic links created and stored inside the repository. 
+It is a mark that ssl and crypto package must be provided explicitly in simutrans AndroidAppSettings.cfg, prior the inclusion of curl?
+
+ssl is a symbolic link towards openssl. It generates a libssl.so.sdl.1.so.
+crypto is also a symoblic link towards folder openssl. It generates a libcrypto.so.sdl.1.so.
+Supposedly, the default names clashes with preincluded system libraries in older Android phones, hence the suffix.
+
+crypto is a dependency of ssl. However, compilation of the library will generate both libssl and libcrypto at the same time. pelya build script will configure openssl to append a version number (sdl.1.so), so libssl knows the name of libcrypto.
+
+It could be an option to regroup all fluidsynth libs into a single folder, and make symbolic links instead, in particular for all libs related to fluidsynth. However Android.mk is different for each lib (LOCAL_SHARED_MODULES point to different targets according to the lib). So maybe differentiating each .so into its own folder is an OK solution.
+
+curl has a rather easy mechanism for downloading files
+https://curl.se/libcurl/c/libcurl-tutorial.html
+
+There seems to be some options to enable, but the first obstacle is SSL not being.
+https://stackoverflow.com/questions/66321383/libcurl-returns-error-code-77-when-the-curlopt-ssl-verifypeer-is-not-disabled
+
+SSL is disabled for the time being.
+Admittedly, https://curl.se/libcurl/c/CURLOPT_CAINFO.html is required to provide the path to certificate authority bundle. What is this path?
+https://developer.android.com/training/articles/security-ssl
+https://stackoverflow.com/questions/15375577/how-to-point-openssl-to-the-root-certificates-on-an-android-device
+https://curl.se/docs/sslcerts.html
+cacert.pem can be downloaded from there.
+https://curl.se/docs/caextract.html
+And this can be linked via curl_easy_setopt(curl, CURLOPT_CAINFO, cabundle_path); It works out of the box.
+The question is now where do we put the cacert.pem? It will make sense to put it in com.simutrans which belongs to the data, kind of hidden from the user, but this mostly applies to Android only.
+
+For the time being, cacert.pem is included by build scripts into the data dir, so that it is readable by ssl lib.
+
+Downloading file to memory done with
+https://curl.se/libcurl/c/getinmemory.html
+
+
+# unzip
+
+Targetting libzip library; zziplib exists, but unsure of how to use it, its maintenance status, and its license.
+
+# resolution
+
+Right now, resolution is predefined in the command line arguments sent by sdl. Not providing the screensize argument, SDL will automatically retrieve the native resolution. However, for some reason, the native resolution is not an accepted video mode by SDL. Anything smaller is though.
+
 
 # compilers NDK version
 
@@ -89,8 +165,14 @@ libcurl is targetting ndk-bundle which is ndk22. ndk-bundle is subject to compil
 
 There is no reason to downgrade compiler as of now.
 
-
 Fluidsynth and its dependencies has used Android 7019983, based on clang 9.0.9; this targets androidabi24, but not much more information.
+
+
+29/08 a new issue has appeared while compiling curl; environment architecture scripts such as ```project/jni/openssl/setCrossEnvironment-arm64-v8a.sh``` have previously used ```AR="$NDK/toolchains/llvm/prebuilt/$MYARCH/bin/$GCCPREFIX-ar"```. For application, this script has been updated somewhere along the line to ```AR="$NDK/toolchains/llvm/prebuilt/$MYARCH/bin/llvm-ar"```.
+Indeed, on ndk r22, $GCCPREFIX-ar and llvm-ar both exist, but on ndk r23, only llvm-ar exists.
+Only llvm-ranlib is introduced starting from ndk r22 (or ndk r21, not confirmed).
+
+
 
 # api target
 
