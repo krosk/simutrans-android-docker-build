@@ -62,7 +62,7 @@ RUN ln -s llvm-objdump ${ANDROID_HOME}/ndk/23.0.7599858/toolchains/llvm/prebuilt
 # Clone libsdl-android source from specific commit; we patch from that version
 
 WORKDIR /android-sdl
-RUN git init && git remote add origin https://github.com/krosk/commandergenius.git && git fetch origin e5f69261a154cdc1d0a60d8c1e93ecd1973602ae && git reset --hard FETCH_HEAD
+RUN git init && git remote add origin https://github.com/krosk/commandergenius.git && git fetch origin 249b820a4a43469261bb45f6acc20abd96037838 && git reset --hard FETCH_HEAD
 
 
 
