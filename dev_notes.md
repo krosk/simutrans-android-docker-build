@@ -1,3 +1,22 @@
+# Possible projects
+
+* proper logging - DONE
+* embed font - DONE
+* have prebuilt openssl (ssl crypto curl prebuilt) - DONE
+* have prebuilt sdl2
+* remove the custom keyboard button
+* zoom pinch bound command: mouse wheel? + and -? - DONE
+* double tap to back button to (truly) exit
+* having a functional linux development process (docker compatible)
+* having a functional windows development process
+* unifying pakset download across OS: Linux, windows, macOS as main targets
+
+# Notes on prebuilt libs
+
+* Fluidsynth 2.2.2
+	flac fluidsynth glib-2.0 gobject-2.0 gthread-2.0 instpatch-1.0 oboe ogg opus sndfile vorbis vorbisenc
+* libzip 1.2.0
+* openssl 1.1.1j (crypto + ssl)
 
 # Notes on Dockerfile instructions
 
@@ -146,7 +165,13 @@ Targetting libzip library; zziplib exists, but unsure of how to use it, its main
 
 # resolution
 
-Right now, resolution is predefined in the command line arguments sent by sdl. Not providing the screensize argument, SDL will automatically retrieve the native resolution. However, for some reason, the native resolution is not an accepted video mode by SDL. Anything smaller is though.
+Right now, resolution is predefined in the command line arguments sent by sdl. Not providing the screensize argument, SDL will automatically retrieve the native resolution. However, for some reason, the native resolution is not an accepted video mode by SDL; root cause is a piece of code that raises the resolution above the native resolution. The main takeaway however is the program is able to infer phone screen resolution, and there is no need of hardcoding an input resolution.
+
+However, in the case of all smartphones, the dpi is very high, so the text and buttons are very small if displayed with native resolution. A scale up is required.
+
+Libsdl android has a specific rendereing layer that is able to upscale the SDL window to fit screen. Meaning that if we choose to render a smaller window, we achieve a scaling up effect. This is good enoough.
+
+I saw SDL_SoftStretch, which could be a way to 'stretch a scaling window'
 
 
 # compilers NDK version
