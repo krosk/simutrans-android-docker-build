@@ -47,7 +47,9 @@ cp project/jni/all/arm64-v8a/libc++_shared.so /opt/android-sdk-linux/ndk/23.0.75
 
 # Cleaning
 
-Cleaning the APK generation, in particular if there is an error about unaligned resources:
+Cleaning the APK generation, in particular if there is an error about:
+* unaligned resources
+* issues of linking android resources (strings, ...)
  1. From ```<root>```, run ```cd project; ./gradlew clean; cd ..```
 
 Cleaning the native C/C++ code embedded in the APK:
@@ -56,7 +58,8 @@ Cleaning the native C/C++ code embedded in the APK:
 Cleaning the source build artifacts:
  3. Remove ```<root>/project/jni/application/simutrans/simutrans/build```
 
-Cleaning the two above should ensure full rebuild.
+Cleaning the two above should ensure full rebuild. A safe way is with:
+```cd project && rm -r src && ./gradlew clean && cd .. && ./build.sh -i simutrans```
 
 # Logging
 
@@ -75,7 +78,7 @@ LOGD("text %s", message)
 Capture most sources with errors with (on host)
 ```
 > adb connect <device_ip>
-> adb logcat -s com.simutrans libc DEBUG crashdump64 AndroidRuntime
+> adb logcat -s com.simutrans libc DEBUG crashdump64 AndroidRuntime SDL libSDL
 ```
 
 Capture library load failing with
